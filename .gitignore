@@ -1,0 +1,10 @@
+# data files
+*.pickle
+*.json
+*.csv
+
+# data folders 
+data\dart
+data\news\train
+data\news\valid
+!.keep
