@@ -2,7 +2,9 @@
 *.pickle
 *.json
 *.csv
-
+*.ipynb
+*.txt
+*.tsv
 # data folders 
 data\dart
 data\news\train
