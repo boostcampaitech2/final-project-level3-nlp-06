@@ -2,9 +2,14 @@
 *.pickle
 *.json
 *.csv
+*.tsv
 
 # data folders 
 data\dart
 data\news\train
 data\news\valid
 !.keep
+
+# log & result folder
+wandb
+results
