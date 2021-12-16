@@ -194,8 +194,8 @@ dart_encoder = BertEncoder.from_pretrained("klue/bert-base").to(device)
 
 
 from torch import optim
-news_optimizer = optim.SGD(news_encoder.parameters(), lr=0.01, momentum=0.9)
-dart_optimizer = optim.SGD(dart_encoder.parameters(), lr=0.01, momentum=0.9)
+news_optimizer = optim.AdamW(news_encoder.parameters(), lr=0.01)#, momentum=0.9)
+dart_optimizer = optim.AdamW(dart_encoder.parameters(), lr=0.01)#, momentum=0.9)
 
 from torch.nn import CrossEntropyLoss
 
@@ -228,11 +228,15 @@ for e in range( epochs ):
 
         corp_code = corp_table.tolist()
         dic = {}
-        for i, corp in enumerate( corp_code ):
-            if corp not in dic:
-                dic[corp] = [i]
+        for gt_pos, corp_label in enumerate( corp_code ):
+            if corp_label not in dic:
+                dic[corp_label] = [gt_pos]
             else:
-                dic[corp].append( i )
+                dic[corp_label].append( gt_pos )
+
+
+
+ 
 
 
         batch_size = batch[0].shape[0]
@@ -249,19 +253,46 @@ for e in range( epochs ):
             
         debug_idx = len(dataloader) // 10
         if batch_idx % debug_idx == 0 :
+            log_print(f"------------batch_idx : {batch_idx} out of {len(dataloader)}------------")
             log_print(f"corp_code : {corp_code}")
             log_print(f"dic : {dic}")
             log_print(f"sim_score[0] : {sim_score[0]}")
             log_print(f"loss so far {e_loss / (batch_idx+1)}")
             
         
-        
+        # pooling
+        # for each data, (1, B)
+        # collect same copr data and recreate sim_score
+        # given sim_score_corp
+#         for k, v in dic.items():
+#             same_corp_idx_list = dic[k] # [idx]
             
+#             same_corp_sim_list = []
+#             for corp_idx in same_corp_idx_list:
+#                 same_corp_sim_list.append( sim_score_corp[corp_idx].detach().numpy() )
             
-        target = torch.arange(start=0, end = batch_size).to(device).to(torch.int64)
+        comb_sim_score = []
+        for sim_score_corp in sim_score:
+            pooling_sim_score = []
+            for k, v in dic.items():
+                same_corp_label_list = dic[k] # [idx]
+
+                earlist_corp_idx = same_corp_label_list[0]
+
+                same_corp_sim_list = []
+                for pred_idx in same_corp_label_list:
+                    same_corp_sim_list.append( sim_score_corp[pred_idx])
+                pooling_sim_score.append( max(same_corp_sim_list)  )
+
+            comb_sim_score.append( pooling_sim_score )
+
+            
+        comb_sim_score = torch.tensor(comb_sim_score)
+        print(comb_sim_score.shape, len(dic))
+        target = torch.arange(start=0, end = len(dic)).to(device).to(torch.int64)
     
         CE_loss = CrossEntropyLoss()
-        loss = CE_loss(sim_score, target)
+        loss = CE_loss(comb_sim_score, target)
         e_loss += loss.item()
 
         pred = torch.argmax(sim_score, dim = 1)
