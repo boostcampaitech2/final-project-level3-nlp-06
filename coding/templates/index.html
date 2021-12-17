@@ -24,10 +24,6 @@
           src="{{ url_for('static', filename='img/main_logo.png') }}"
           alt="">
       </a>
-      <!-- <a href="/"><img style="width: 100%;"
-          src="https://www.google.com/logos/doodles/2021/seasonal-holidays-2021-6753651837109324-6752733080595603-cst.gif"
-          alt="">
-      </a> -->
     </div>
     <textarea class="form-control" style="height: 150px; margin-top: 10px;" placeholder="뉴스 텍스트 입력해주세요"
       id="newsTextData" name="newsTextData"></textarea>
@@ -41,14 +37,11 @@
   </div>
   {% else %}
   <div style="margin-top:20px;">
-    <!-- <div style="margin: 10px;"> -->
     <h2 style="text-align: center;">관련주 추천</h2>
-    <!-- </div> -->
     {% if stock_corp|length > 0 %}
     <div>
       
       {% for i in range(3) %}
-      <!-- <span class="badge bg-primary">{{corp}}</span> -->
       <button type="button" class="btn btn-primary btn-sm" style="margin-bottom: 10px;" onClick="onDisplay({{i+1}})">{{stock_corp[i].name}}</button>
       {% endfor %}
       {% for i in range(3) %}
