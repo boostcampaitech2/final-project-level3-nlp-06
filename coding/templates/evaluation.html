@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<script src='../static/js/evaluation.js'></script>
+{% endblock %}
+
+{% block main %}
+{% if not nickname %}
+<form style="margin-top: 100px;" method="GET" action="/evaluation/{{idx}}">
+  <div>
+    <input style="max-width: 330px; display: inline-block!important;" name="nickname" type="text" class="form-control"
+      id="nickname" placeholder="이름을 입력해주세요">
+    <button id="start_test" style="margin-bottom: 4px;" class="btn btn-md btn-primary" type="submit">시작하기</button>
+  </div>
+</form>
+{% elif data %}
+<div>
+  <div>
+    <h2>뉴스데이터{{idx}}</h2>
+  </div>
+  <div style="margin: 20px 0px; word-break: normal; text-align: justify;">
+    {{data.news_data['data']}}
+  </div>
+  <div style="margin: 20px 0px; word-break: normal; text-align: justify;">
+    <strong>키워드 : {{data.keywords}}</strong>
+  </div>
+  {% for stock_id in range(data.stocks|length) %}
+  <div>
+    <div>
+      <h3>추천주 : {{data.stocks[stock_id]['name']}}</h3>
+    </div>
+    <div class="accordion accordion-flush" id="accordionFlushStock">
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="flush-heading{{stock_id}}One">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+            data-bs-target="#flush-collapse{{stock_id}}One" aria-expanded="false" aria-controls="flush-collapse{{stock_id}}One">
+            회사의 개요
+          </button>
+        </h2>
+        <div id="flush-collapse{{stock_id}}One" class="accordion-collapse collapse" aria-labelledby="flush-heading{{stock_id}}One"
+          data-bs-parent="#accordionFlushStock">
+          <div class="accordion-body" style="word-break: normal; text-align: justify;">
+            {{data.stocks[stock_id].detail['회사의 개요']}}
+          </div>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="flush-heading{{stock_id}}Two">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+            data-bs-target="#flush-collapse{{stock_id}}Two" aria-expanded="false" aria-controls="flush-collapse{{stock_id}}Two">
+            사업의 개요
+          </button>
+        </h2>
+        <div id="flush-collapse{{stock_id}}Two" class="accordion-collapse collapse" aria-labelledby="flush-heading{{stock_id}}Two"
+          data-bs-parent="#accordionFlushStock">
+          <div class="accordion-body" style="word-break: normal; text-align: justify;">
+            {{data.stocks[stock_id].detail['사업의 개요']}}
+          </div>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="flush-heading{{stock_id}}Three">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+            data-bs-target="#flush-collapse{{stock_id}}Three" aria-expanded="false" aria-controls="flush-collapse{{stock_id}}Three">
+            주요 제품 및 서비스
+          </button>
+        </h2>
+        <div id="flush-collapse{{stock_id}}Three" class="accordion-collapse collapse" aria-labelledby="flush-heading{{stock_id}}Three"
+          data-bs-parent="#accordionFlushStock">
+          <div class="accordion-body" style="word-break: normal; text-align: justify;">
+            {{data.stocks[stock_id].detail['주요 제품 및 서비스']}}
+          </div>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="flush-heading{{stock_id}}Four">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+            data-bs-target="#flush-collapse{{stock_id}}Four" aria-expanded="false" aria-controls="flush-collapse{{stock_id}}Four">
+            주요계약 및 연구개발활동
+          </button>
+        </h2>
+        <div id="flush-collapse{{stock_id}}Four" class="accordion-collapse collapse" aria-labelledby="flush-heading{{stock_id}}Four"
+          data-bs-parent="#accordionFlushStock">
+          <div class="accordion-body" style="word-break: normal; text-align: justify;">
+            {{data.stocks[stock_id].detail['주요계약 및 연구개발활동']}}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <br>
+  {%endfor%}
+  <form style="margin-top: 100px;" method="GET" action="{% if idx == 20 %}/evaluation {% else %} /evaluation/{{idx+1}}{% endif %}">
+    {% for i in range(1, 8) %}
+    <div class="form-check form-check-inline">
+      <input class="form-check-input" type="radio" name="evaluationRadioOptions" id="eval{{i}}" value="{{i}}">
+      <label class="form-check-label" for="inlineRadio1">{{i}}</label>
+    </div>
+    {% endfor %}
+    <div style="margin: 20px 0;">
+      <button id="valNext" class="btn btn-sm btn-primary" type="submit" disabled>{% if idx == 20 %}완료{% else %}다음{% endif %}</button>
+    </div>
+    <input type="hidden" name="nickname" value="{{nickname}}">
+  </form>
+  <div class="progress">
+    <div class="progress-bar" role="progressbar" style="width: {{percent}}%" aria-valuenow="{{percent}}"
+      aria-valuemin="0" aria-valuemax="20">{{idx-1}}/20</div>
+  </div>
+</div>
+{% else %}
+<div>{% if idx == 0 %}평가할 데이터가 없습니다.{% else %}평가가 완료되었습니다.{% endif %}</div>
+<button class="btn btn-sm btn-primary" onclick="location.href='/'">홈으로</button>
+<button type="button" class="btn btn-sm btn-primary" onclick="location.href='result'">result</button>
+{% endif %}
+{% endblock %}
