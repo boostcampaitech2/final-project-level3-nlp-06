@@ -202,117 +202,130 @@ from torch.nn import CrossEntropyLoss
 
 # In[42]:
 
-
-
-epochs = 3
-for e in range( epochs ):
-    e_loss = 0
-    num_correct = 0
-    print(f"epoch {e+1} start...")
-    print(f"{len(dataloader)} batches proceed...")
-    for batch_idx, batch in tq( enumerate(dataloader) ):
-        news_data = {
-            'input_ids' : batch[0].to(device).to(torch.int64), # ( B, seq_len )
-            'token_type_ids' : batch[1].to(device).to(torch.int64),
-            'attention_mask' : batch[2].to(device).to(torch.int64),
-        }
-        
-        dart_data = {
-            'input_ids' : batch[3].to(device).to(torch.int64), # ( B, seq_len )
-            'token_type_ids' : batch[4].to(device).to(torch.int64),
-            'attention_mask' : batch[5].to(device).to(torch.int64),
-        }
-
-        corp_table = batch[6]
-
-
-        corp_code = corp_table.tolist()
-        dic = {}
-        for gt_pos, corp_label in enumerate( corp_code ):
-            if corp_label not in dic:
-                dic[corp_label] = [gt_pos]
-            else:
-                dic[corp_label].append( gt_pos )
-
-
-
- 
-
-
-        batch_size = batch[0].shape[0]
-        del batch
-        
-        news_encoder.train()
-        news_encoder.zero_grad()
-        news_emb = news_encoder(**news_data) # (B, hidden_dim)
-        dart_encoder.train()
-        dart_encoder.zero_grad()
-        dart_emb = dart_encoder(**dart_data) # (B, hidden_dim)
-        sim_score = torch.matmul( news_emb, dart_emb.T ) # (B , B)
-                
-            
-        debug_idx = len(dataloader) // 10
-        if batch_idx % debug_idx == 0 :
-            log_print(f"------------batch_idx : {batch_idx} out of {len(dataloader)}------------")
-            log_print(f"corp_code : {corp_code}")
-            log_print(f"dic : {dic}")
-            log_print(f"sim_score[0] : {sim_score[0]}")
-            log_print(f"loss so far {e_loss / (batch_idx+1)}")
-            
-        
-        # pooling
-        # for each data, (1, B)
-        # collect same copr data and recreate sim_score
-        # given sim_score_corp
-#         for k, v in dic.items():
-#             same_corp_idx_list = dic[k] # [idx]
-            
-#             same_corp_sim_list = []
-#             for corp_idx in same_corp_idx_list:
-#                 same_corp_sim_list.append( sim_score_corp[corp_idx].detach().numpy() )
-            
-        comb_sim_score = []
-        for sim_score_corp in sim_score:
-            pooling_sim_score = []
-            for k, v in dic.items():
-                same_corp_label_list = dic[k] # [idx]
-
-                earlist_corp_idx = same_corp_label_list[0]
-
-                same_corp_sim_list = []
-                for pred_idx in same_corp_label_list:
-                    same_corp_sim_list.append( sim_score_corp[pred_idx])
-                pooling_sim_score.append( max(same_corp_sim_list)  )
-
-            comb_sim_score.append( pooling_sim_score )
-
-            
-        comb_sim_score = torch.tensor(comb_sim_score)
-        print(comb_sim_score.shape, len(dic))
-        target = torch.arange(start=0, end = len(dic)).to(device).to(torch.int64)
+def pooling(emb_list, pool = "max"):
+    if pool == "max":
+        max_pool = emb_list[0]
+        for emb in emb_list:
+            max_pool = torch.maximum(emb, max_pool)
+        return max_pool
     
-        CE_loss = CrossEntropyLoss()
-        loss = CE_loss(comb_sim_score, target)
-        e_loss += loss.item()
+    if pool == "sum":
+        return sum(emb_list)
+       
+    if pool == "avg":
+        return sum(emb_list ) / len(emb_list)
+    
+    
 
-        pred = torch.argmax(sim_score, dim = 1)
-        for i, p in enumerate( pred ):
-            if p == i:
-                num_correct += 1
-        
-        
-        loss.backward()
-        dart_optimizer.step()
-        news_optimizer.step()
+def train(epochs, pool = "sum"):
+    for e in range( epochs ):
+        e_loss = 0
+        num_correct = 0
+        print(f"epoch {e+1} start...")
+        print(f"{len(dataloader)} batches proceed...")
+        for batch_idx, batch in tq( enumerate(dataloader) ):
+            news_data = {
+                'input_ids' : batch[0].to(device).to(torch.int64), # ( B, seq_len )
+                'token_type_ids' : batch[1].to(device).to(torch.int64),
+                'attention_mask' : batch[2].to(device).to(torch.int64),
+            }
 
-        del dart_emb
-        del news_emb
-        torch.cuda.empty_cache()
-    log_print(f"epoch : {e}, loss : { e_loss / len(dataloader) }")
-    total_data_size =  len(dataloader) * BATCH_SIZE
-    log_print(f"num_ccorect : {num_correct}, total_data_size : {total_data_size}, accuracy: { num_correct / total_data_size}")
+            dart_data = {
+                'input_ids' : batch[3].to(device).to(torch.int64), # ( B, seq_len )
+                'token_type_ids' : batch[4].to(device).to(torch.int64),
+                'attention_mask' : batch[5].to(device).to(torch.int64),
+            }
+
+            corp_table = batch[6]
 
 
+            corp_code = corp_table.tolist()
+            dic = {}
+            for gt_pos, corp_label in enumerate( corp_code ):
+                if corp_label not in dic:
+                    dic[corp_label] = [gt_pos]
+                else:
+                    dic[corp_label].append( gt_pos )
+
+
+
+
+
+
+            batch_size = batch[0].shape[0]
+            del batch
+
+            news_encoder.train()
+            news_encoder.zero_grad()
+            news_emb = news_encoder(**news_data) # (B, hidden_dim)
+            dart_encoder.train()
+            dart_encoder.zero_grad()
+            dart_emb = dart_encoder(**dart_data) # (B, hidden_dim)
+
+
+
+
+
+            # pooling
+            news_emb_comb = []
+            dart_emb_comb = []
+            for corp_label, same_corp_data_idx_list in dic.items():
+
+                ealriest_idx = same_corp_data_idx_list[0]
+
+                # for news_emb
+                # remove same emb data, because it must be same
+                # news data take only the first one
+                news_emb_comb.append( news_emb[ealriest_idx] )
+
+                # dart data pool
+                dart_same_emb_list = []
+                for idx in same_corp_data_idx_list:
+                    dart_same_emb_list.append( dart_emb[idx] )
+                dart_emb_comb.append( sum(dart_same_emb_list) )
+
+
+
+            news_emb_comb = torch.stack(news_emb_comb)
+            dart_emb_comb = torch.stack( dart_emb_comb)
+
+
+            sim_score = torch.matmul( news_emb_comb, dart_emb_comb.T )
+            target = torch.arange(start = 0, end = news_emb_comb.shape[0] ).to(device).to(torch.int64)
+            # sim_score.shape, target.shape
+
+            debug_idx = len(dataloader) // 10
+            if batch_idx % debug_idx == 0 :
+                log_print(f"------------batch_idx : {batch_idx} out of {len(dataloader)}------------")
+                log_print(f"corp_code : {corp_code}")
+                log_print(f"dic : {dic}")
+                log_print(f"sim_score[0] : {sim_score[0]}")
+                log_print(f"loss so far {e_loss / (batch_idx+1)}")
+
+            CE_loss = CrossEntropyLoss()
+            loss = CE_loss(sim_score, target)
+            e_loss += loss.item()
+
+            pred = torch.argmax(sim_score, dim = 1)
+            for i, p in enumerate( pred ):
+                if p == i:
+                    num_correct += 1
+
+
+            loss.backward()
+            dart_optimizer.step()
+            news_optimizer.step()
+
+            del dart_emb
+            del news_emb
+            torch.cuda.empty_cache()
+        log_print(f"epoch : {e}, loss : { e_loss / len(dataloader) }")
+        total_data_size =  len(dataloader) * BATCH_SIZE
+        log_print(f"num_ccorect : {num_correct}, total_data_size : {total_data_size}, accuracy: { num_correct / total_data_size}")
+
+train(10, "max")
+train(10, "sum")
+train(10, "avg")
 # In[ ]:
 
 
