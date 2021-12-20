@@ -5,8 +5,8 @@ from gensim.models.doc2vec import TaggedDocument
 from tqdm import tqdm
 import os
 import kss
-from input_preprocess import remove_email,  morph_filter
-from load_doc2vec import *
+from .input_preprocess import remove_email,  morph_filter
+from .load_doc2vec import *
 
 # input이 doc
 def preprocess_news(doc):
@@ -27,8 +27,8 @@ def tokenize(text):
 
 
 def doc2vec_inference(doc):
-    if os.path.isfile("./dart_fin.doc2vec") :
-        model = doc2vec.Doc2Vec.load('./dart_fin.doc2vec') # 경로를 바꿔주세요
+    if os.path.isfile("/opt/ml/final-project-level3-nlp-06/model/dart_fin.doc2vec") :
+        model = doc2vec.Doc2Vec.load('/opt/ml/final-project-level3-nlp-06/model/dart_fin.doc2vec') # 경로를 바꿔주세요
     else:
         model = load_doc_model()
     
