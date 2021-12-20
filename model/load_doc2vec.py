@@ -23,9 +23,11 @@ def load_doc_model():
     # print(f"Tag Size: {len(model.docvecs.doctags.keys())}", end=' / ')
 
     # Doc2Vec 학습
+    print("training model...")
     model.train(tagged_corpus_list, total_examples=model.corpus_count, epochs=50)
 
     # 모델 저장
+    print("saving model...")
     model.save('./dart_fin.doc2vec')
 
     return doc2vec.Doc2Vec.load('dart_fin.doc2vec')
