@@ -30,8 +30,8 @@ def main():
     # Example
     doc = "삼성전자가 고성능 솔리드스테이트드라이브(SSD)와 그래픽 D램 등 첨단 메모리 반도체를 글로벌 자동차 제조사에 공급한다고 16일 밝혔다."
     
-    if os.path.isfile("/opt/ml/final_project/data/dart/dart.doc2vec") :
-        model = doc2vec.Doc2Vec.load('/opt/ml/final_project/data/dart/dart.doc2vec') # 경로를 바꿔주세요
+    if os.path.isfile("/opt/ml/final_project/data/dart/dart_fin.doc2vec") :
+        model = doc2vec.Doc2Vec.load('/opt/ml/final_project/data/dart/dart_fin.doc2vec') # 경로를 바꿔주세요
     else:
         model = load_doc_model()
     
