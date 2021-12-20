@@ -10,9 +10,19 @@ from .load_doc2vec import *
 
 # input이 doc
 def preprocess_news(doc):
+    # from koalanlp import API
+    # from koalanlp.proc import SentenceSplitter
 
+    # splitter = SentenceSplitter(splitter_type=API.HANNANUM)
+    # paragraph = splitter("분리할 문장을 이렇게 넣으면 문장이 분리됩니다. 간단하죠?")
+    # # 또는 splitter.sentences(...), splitter.invoke(...)
+
+    # print(paragraph[0]) # == 분리할 문장을 이렇게 넣으면 문장이 분리됩니다.
+    # print(paragraph[1]) # == 간단하죠?
     preprocessed_news = []
-    sents = kss.split_sentences(doc)
+    
+
+    sents = kss.split_sentences(doc, backend = "mecab", num_workers=-1)
     sents = remove_email(sents)
     sents = morph_filter(sents)
     sents = " ".join(sents)
