@@ -12,8 +12,8 @@ from .load_doc2vec import *
 def preprocess_news(doc):
 
     preprocessed_news = []
-    sents = kss.split_sentences(doc)
-    sents = remove_email(sents)
+    # sents = kss.split_sentences(doc)
+    sents = remove_email(doc)
     sents = morph_filter(sents)
     sents = " ".join(sents)
 
@@ -26,16 +26,29 @@ def tokenize(text):
     return mecab.nouns(str(text))
 
 
-def doc2vec_inference(doc):
+def doc2vec_inference(doc, num_prediction = 3):
+    from time import time
+
+    start = time()
     if os.path.isfile("/opt/ml/final-project-level3-nlp-06/model/dart_fin.doc2vec") :
         model = doc2vec.Doc2Vec.load('/opt/ml/final-project-level3-nlp-06/model/dart_fin.doc2vec') # 경로를 바꿔주세요
     else:
         model = load_doc_model()
-    
+    end = time()
+
+    start = time()
     text = preprocess_news(doc)
+    end = time()
+
+    start = time()
     docs_mod = tokenize(text)
+    end = time()
+
+    start = time()
     scriptV = model.infer_vector(docs_mod, alpha=0.025, min_alpha=0.025, epochs=50)
-    result = model.docvecs.most_similar(positive=[scriptV], topn=3)
+    end = time()
+
+    result = model.docvecs.most_similar(positive=[scriptV], topn=num_prediction)
     total_result = [corp[0] for corp in result]
     return total_result
 

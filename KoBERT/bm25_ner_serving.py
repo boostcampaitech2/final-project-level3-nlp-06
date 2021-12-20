@@ -118,7 +118,7 @@ def preprocess_dart(dart_dataset):
     return dart_dict, pre_dart, pre_name
 
 # 키워드 + BM25 활용 관련주 출력 함수
-def print_corp_name(news_text, dart_dict, bm25, pre_dart, pre_name, mecab_tokenizer, ner=None):
+def print_corp_name(news_text, dart_dict, bm25, pre_dart, pre_name, mecab_tokenizer, ner=None, num_prediction = 5):
     """
         tokenized_query : keywords
         inside_corp : 언급된 회사
@@ -138,7 +138,7 @@ def print_corp_name(news_text, dart_dict, bm25, pre_dart, pre_name, mecab_tokeni
             '전년','동월','물가','하락','소비자','상승','운영','증가','억원','억만원','할인','사용','것으']
 
     if ner==None:
-        keywords = summarize_with_keywords(target, min_count=4, max_length=7, beta=0.85, max_iter=10,stopwords=stopwords,verbose=True)
+        keywords = summarize_with_keywords([target], min_count=4, max_length=7, beta=0.85, max_iter=10,stopwords=stopwords,verbose=True)
         tokenized_query = list(keywords.keys())
     else:
         tokenized_query = mecab_tokenizer.nouns(ner)
@@ -146,6 +146,7 @@ def print_corp_name(news_text, dart_dict, bm25, pre_dart, pre_name, mecab_tokeni
     for key in target.split(" "):
         if key in dart_dict['corp_name']:
             inside_corp.append(key)
+    
 
     for key in tokenized_query:
         if key in dart_dict['corp_name']:
@@ -158,10 +159,10 @@ def print_corp_name(news_text, dart_dict, bm25, pre_dart, pre_name, mecab_tokeni
     if max(doc_scores) <3: #마땅한 회사가 없음
         return False
     else:
-        list_dart_n = bm25.get_top_n(tokenized_query, list(pre_dart.values()), n=5)
+        list_dart_n = bm25.get_top_n(tokenized_query, list(pre_dart.values()), n=num_prediction)
         corps = [pre_name[dart] for dart in list_dart_n]
 
-    return corps #tokenized_query, inside_corp, " ".join(target) , corps
+    return corps,tokenized_query#, inside_corp, " ".join(target) , corps
 
 
 def get_preprocess_data():
