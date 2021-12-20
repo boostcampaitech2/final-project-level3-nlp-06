@@ -20,7 +20,7 @@ from transformers import (
     DistilBertForTokenClassification,
     ElectraForTokenClassification
 )
-from tokenization_kobert import KoBertTokenizer
+from .tokenization_kobert import KoBertTokenizer
 
 MODEL_CLASSES = {
     'kobert': (BertConfig, BertForTokenClassification, KoBertTokenizer),

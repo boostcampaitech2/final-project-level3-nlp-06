@@ -8,7 +8,7 @@ import torch
 from torch.utils.data import TensorDataset, DataLoader, SequentialSampler
 from transformers import AutoModelForTokenClassification
 
-from utils import init_logger, load_tokenizer, get_labels
+from .utils import init_logger, load_tokenizer, get_labels
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +20,10 @@ def get_device(pred_config):
 def get_args(pred_config):
     return torch.load(os.path.join(pred_config.model_dir, 'training_args.bin'))
 
+def get_label_args(pred_config):
+    print("get label arg function: ", pred_config.data_dir)
+    return pred_config.data_dir
+
 
 def load_model(pred_config, args, device):
     # Check whether model exists
@@ -27,11 +31,12 @@ def load_model(pred_config, args, device):
         raise Exception("Model doesn't exists! Train first!")
 
     try:
-        model = AutoModelForTokenClassification.from_pretrained(args.model_dir)  # Config will be automatically loaded from model_dir
+        model = AutoModelForTokenClassification.from_pretrained(pred_config.model_dir)  # Config will be automatically loaded from model_dir
         model.to(device)
         model.eval()
         logger.info("***** Model Loaded *****")
-    except:
+    except Exception as e:
+        print(e)
         raise Exception("Some model files might be missing...")
 
     return model

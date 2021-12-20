@@ -7,8 +7,8 @@ from konlpy.tag import Mecab
 from rank_bm25 import BM25Okapi
 from krwordrank.word import summarize_with_keywords
 
-from utils import load_tokenizer, get_labels
-from predict import *
+from .utils import load_tokenizer, get_labels
+from .predict import *
 
 # 입력되는 뉴스데이터 전처리 함수
 def preprocess_input_news(news_text, length):
@@ -18,16 +18,22 @@ def preprocess_input_news(news_text, length):
 def load_NER():
     # ## 2. NER
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_dir", default="./model", type=str, help="Path to save, load model")
+    parser.add_argument("--model_dir", default="/opt/ml/final-project-level3-nlp-06/KoBERT/model", type=str, help="Path to save, load model")
+    parser.add_argument("--data_dir", default="/opt/ml/final-project-level3-nlp-06/KoBERT/data", type=str, help="Ner model data files dir")
+    parser.add_argument("--label_file", default="label.txt", type=str, help="Ner model data files dir")
+
     parser.add_argument("--batch_size", default=1, type=int, help="Batch size for prediction")
     parser.add_argument("--no_cuda", action="store_false", default=False, help="Avoid using CUDA when available")
-    pred_config = parser.parse_args(args=[])
+    pred_config = parser.parse_args()
 
     # load model and args
     args = get_args(pred_config)
     device = get_device(pred_config)
     model = load_model(pred_config, args, device)
-    label_lst = get_labels(args)
+    label_lst = get_labels(pred_config)
+
+
+
     logger.info(args)
 
     # Convert input file to TensorDataset
@@ -135,9 +141,8 @@ def print_corp_name(news_text, dart_dict, bm25, pre_dart, pre_name, mecab_tokeni
         keywords = summarize_with_keywords(target, min_count=4, max_length=7, beta=0.85, max_iter=10,stopwords=stopwords,verbose=True)
         tokenized_query = list(keywords.keys())
     else:
-        tokenized_query = mecab_tokenizer.nouns(ner_result)
+        tokenized_query = mecab_tokenizer.nouns(ner)
 
-    print(tokenized_query)
     for key in target.split(" "):
         if key in dart_dict['corp_name']:
             inside_corp.append(key)
@@ -159,29 +164,65 @@ def print_corp_name(news_text, dart_dict, bm25, pre_dart, pre_name, mecab_tokeni
     return corps #tokenized_query, inside_corp, " ".join(target) , corps
 
 
-if __name__=="__main__":
-    ## 한번만 실행해도 되는 부분
+def get_preprocess_data():
     # 1. 다트데이터셋 전처리
     dart_dataset = load_dataset('nlpHakdang/beneficiary',  data_files="dart_v3_3.csv", use_auth_token='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')
     dart_dict, pre_dart, pre_name = preprocess_dart(dart_dataset)
 
+    return dart_dict, pre_dart, pre_name
+
+
+def load_bm25_model(preprocess_dart_data):
     # 2. bm25 모델 로드
     mecab_tokenizer = Mecab() # 전처리한 데이터에서 명사만 추출
-    tot = [mecab_tokenizer.nouns(txt) for txt in tqdm(list(pre_dart.values()))]
+    tot = [mecab_tokenizer.nouns(txt) for txt in tqdm(list(preprocess_dart_data.values()))]
     bm25 = BM25Okapi(tot)
 
-    # 3. NER 모델 로드
+    return mecab_tokenizer, bm25
+
+if __name__=="__main__":
+    ## 한번만 실행해도 되는 부분
+    # # 1. 다트데이터셋 전처리
+    # dart_dataset = load_dataset('nlpHakdang/beneficiary',  data_files="dart_v3_3.csv", use_auth_token='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')
+    # dart_dict, pre_dart, pre_name = preprocess_dart(dart_dataset)
+
+    # # 2. bm25 모델 로드
+    # mecab_tokenizer = Mecab() # 전처리한 데이터에서 명사만 추출
+    # tot = [mecab_tokenizer.nouns(txt) for txt in tqdm(list(pre_dart.values()))]
+    # bm25 = BM25Okapi(tot)
+
+    # # 3. NER 모델 로드
+    # pred_config, args, tokenizer, pad_token_label_id, device, model, label_lst = load_NER()
+
+
+
+    # # 1. 다트데이터셋 전처리
+    dart_dict, pre_dart, pre_name = get_preprocess_data()
+
+    # # 2. bm25 모델 로드
+    mecab_tokenizer, bm25 = load_bm25_model(pre_dart)
+
+    # # 3. NER 모델 로드
     pred_config, args, tokenizer, pad_token_label_id, device, model, label_lst = load_NER()
 
 
+    from time import time
+
+    start = time()
     ## 매번 실행헤서 결과를 얻는 부분
     # 4. 입력받은 뉴스데이터
     news_text = "‘넥슨’ 이름을 단 시가총액 1조원이 넘는 개발사가 조만간 모습을 드러낼 전망이다. 넥슨은 최근 개발 자회사 넷게임즈와 넥슨지티를 합병한다고 밝혔다. 모바일게임과 PC 온라인게임에 각각 강점을 가지고 있는 두 회사의 합병을 통해 시너지 효과를 낼 것으로 보인다. 아울러 넥슨의 국내 유일 상장법인이라는 점에서 국내 투자자들에게도 많은 주목을 받을 것으로 전망된다.넥슨지티와 넷게임즈의 합병은 오는 2022년 2월 8일 주주총회를 거쳐 최종 결정된다. 합병 기일은 같은 해 3월 31일이다. 합병비율은 1 대 1.0423647(넷게임즈:넥슨지티)로 합병에 따른 존속회사는 넷게임즈이며, 신규 법인명은 넥슨게임즈(가칭)다.두 회사는 이번 합병을 통해 급변하는 글로벌 게임 시장에서 각각의 개발 법인이 가진 성공 노하우와 리소스를 결합해 PC, 모바일, 콘솔 등 멀티플랫폼을 지향하는 최상의 개발 환경을 구축할 계획이다. 넥슨게임즈의 대표이사는 현 넷게임즈 박용현 대표가 선임될 예정이며, 넥슨지티 신지환 대표는 등기이사직을 맡는다. 넥슨게임즈 이사진에는 넥슨코리아 이정헌 대표도 합류해 넥슨코리아와 협업도 강화할 계획이다.넷게임즈는 모바일 RPG ‘히트’와 ‘V4’를 통해 두 번의 대한민국 게임대상 수상 및 ‘오버히트’와 ‘블루아카이브’ 등을 통해 국내·외 모바일게임 시장에 굵직한 족적을 남긴 RPG 전문 개발사다. 넥슨지티는 FPS 게임 ‘서든어택’ 개발사로 슈팅 게임 명가로 자리매김했다. 올해로 서비스 16주년을 맞이했음에도 탁월한 라이브 운영으로 지난 3분기에만 전년 동기 대비 211%의 매출 성장을 기록했다.넥슨은 이번 합병으로 넥슨코리아 신규개발본부, 네오플, 넥슨게임즈, 원더홀딩스와 설립한 합작법인(니트로 스튜디오, 데브캣) 등을 큰 축으로 신규 개발을 이끌어갈 계획이다."
     split_news_text = preprocess_input_news(news_text, length=500)# 500글자 단위로 잘라 2차원 배열을 만들고, 공백 기준으로 split
-    
+    preprocessed_time = time()
+    print("뉴스 데이터 전처리 시간: ", preprocessed_time - start)
+
     # 5.1.ner+bm25 모델 활용 관련주 추출
     ner_result = predict_ner(split_news_text, pred_config, args, tokenizer, pad_token_label_id, device, model, label_lst)
-    print_corp_name(news_text, dart_dict, bm25, pre_dart, pre_name, mecab_tokenizer, ner=True)
+    print_corp_name(news_text, dart_dict, bm25, pre_dart, pre_name, mecab_tokenizer, ner = ner_result)
+    ner_bm25_time = time()
+    print("ner bm25 inference 시간: ", ner_bm25_time - preprocessed_time)
     
     # 5.2.kwordrank+bm25 모델 활용 관련주 추출
-    print_corp_name(news_text, dart_dict, bm25, pre_dart, pre_name, mecab_tokenizer, ner=False)
+    print_corp_name(news_text, dart_dict, bm25, pre_dart, pre_name, mecab_tokenizer, ner = None)
+    kr_bm25_time = time()
+    print("kr bm25 inference 시간:", kr_bm25_time - ner_bm25_time)
