@@ -157,7 +157,7 @@ def print_corp_name(news_text, dart_dict, bm25, pre_dart, pre_name, mecab_tokeni
     doc_scores = bm25.get_scores(tokenized_query)
     
     if max(doc_scores) <3: #마땅한 회사가 없음
-        return False
+        return None, None
     else:
         list_dart_n = bm25.get_top_n(tokenized_query, list(pre_dart.values()), n=num_prediction)
         corps = [pre_name[dart] for dart in list_dart_n]
