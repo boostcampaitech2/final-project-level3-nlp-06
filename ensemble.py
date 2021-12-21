@@ -82,7 +82,7 @@ def run_ensemble(wordrank_sim_corps, ner_sim_corps, doc2vec_sim_corps, ner_keywo
         return ensembled_sim_corps_to_score_dict, keywords_set
 
 
-def ensemble_inference_realtime(models, news_text):
+def ensemble_inference(models, news_text):
     n_c, n_k = models.bm25_inference_with_ner(news_text)
     k_c, k_k = models.bm25_inference_with_word_rank(news_text)
     d_c = models.doc2vec_inference(news_text)
@@ -90,6 +90,10 @@ def ensemble_inference_realtime(models, news_text):
     ensembled_sim_corps_to_score_dict, keywords_set = run_ensemble(k_c, n_c, d_c, n_k, k_k)
 
     return ensembled_sim_corps_to_score_dict, keywords_set
+
+def ensemble_inference_real_time(models, news_text, topk):
+    ensembled_sim_corps_to_score_dict, _ = ensemble_inference(models, news_text)
+    return list(ensembled_sim_corps_to_score_dict.keys())[-topk::][::-1]
 
 def ensemble_inference_from_disk(models, query_dir = 'queries.txt', ):
     infer_dict = {}
@@ -105,7 +109,7 @@ def ensemble_inference_from_disk(models, query_dir = 'queries.txt', ):
         infer_dict[idx] = {}
         infer_dict[idx]['news_text'] = news_text
 
-        ensembled_sim_corps_to_score_dict, keywords_set = ensemble_inference_realtime(models, news_text)
+        ensembled_sim_corps_to_score_dict, keywords_set = ensemble_inference(models, news_text)
 
         infer_dict[idx]['keywords_set'] = keywords_set
         infer_dict[idx]['sorted_count_dict'] = ensembled_sim_corps_to_score_dict
@@ -121,7 +125,7 @@ def ensemble_inference_console_test(models):
         news_text = input("input news text: 뉴스 기사 개생 없이 넣으세요\n")
         if news_text == "\n":
             break
-        ensembled_sim_corps_to_score_dict, keywords_set = ensemble_inference_realtime(models, news_text)
+        ensembled_sim_corps_to_score_dict, keywords_set = ensemble_inference(models, news_text)
         print(ensembled_sim_corps_to_score_dict.keys())
 
 
@@ -132,8 +136,8 @@ if __name__ == '__main__':
     
     
     models = Models(num_prediction = 20) # 필요한 모델과 데이터 로드. 서버 실행 시 1번만 수행
-    ensembled_sim_corps_to_score_dict, keywords_set = ensemble_inference_realtime(models, news_text) # models object와 유저가 넣은 뉴스 기사 입력
-    print( ensembled_sim_corps_to_score_dict.keys() ) # 뒤로 갈수록 유사한 기업들
+    topk = 3
+    print(ensemble_inference_real_time(models, news_text, topk))
 
     # 주어진 기사들을 한꺼번에 inference 해서 결과를 파일로 저장
     # ensemble_inference_from_disk(models, query_dir = 'queries.txt') # query txt: 한 줄에 개행 없는 하나의 기사.
