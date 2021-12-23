@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<script src="{{ url_for('static', filename='js/index.js') }}"></script>
+<style>
+  .text-style {
+    text-align: start;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .text-style-new {
+    width: 100%;
+    text-align: start;
+    margin: 2px 0;
+    color: gray;
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+  }
+</style>
+{% endblock %}
+
+{% block main %}
+<!-- <div style="position: absolute; right: 0; top: 5px;">
+  <button type="button" class="btn btn-sm btn-dark" onclick="location.href='evaluation'">Evaluation</button>
+  <button type="button" class="btn btn-sm btn-dark" onclick="location.href='result/bm25'">result</button>
+</div> -->
+<div>
+  <form method="GET" action="/stock">
+    <div class="container row" style="float: none; margin:auto; margin-top: 100px;">
+      <a href="/">
+        <img style="width: 70%;"
+          src="{{ url_for('static', filename='img/main_logo_black.PNG') }}"
+          alt="">
+        <!-- <img style="width: 10%;"
+          src="{{ url_for('static', filename='img/sub_logo.png') }}"
+          alt=""> -->
+      </a>
+    </div>
+    <textarea class="form-control" style="height: 150px; margin-top: 50px;" placeholder="뉴스 텍스트 입력해주세요"
+      id="newsTextData" name="newsTextData">{% if newsTextData|length > 0 %}{{newsTextData}}{% endif %}</textarea>
+    <div class="d-grid d-md-flex justify-content-md-end" style="margin-top:10px;">
+      <button class="w-30 btn btn-lg btn-dark" type="submit">관련주 추천받기</button>
+    </div>
+  </form>
+  {% if newsTextData|length == 0 %}
+  <div>
+    입력된 뉴스 텍스트가 없습니다.
+  </div>
+  {% else %}
+  <div style="margin-top:20px;">
+    <!-- <div style="margin: 10px;"> -->
+    <h2 style="text-align: center;">관련주 추천</h2>
+    {% if flag == 0 %}<div style="color: red; margin: 20px;">※ 해당 뉴스에 대한 관련주는 뉴스와 관련이 없을 수 있습니다.</div>{% endif %}
+    <!-- </div> -->
+    {% if stock_corp|length > 0 %}
+    <div>
+      
+      {% for i in range(3) %}
+      <!-- <span class="badge bg-primary">{{corp}}</span> -->
+      <button type="button" class="btn btn-dark btn-sm" style="margin-bottom: 10px;" onClick="onDisplay({{i+1}})">{{stock_corp[i].name}}</button>
+      {% endfor %}
+      {% for i in range(3) %}
+      <div id="corp_info{{i+1}}" class="card" style="width: 100%;">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-7">
+              <div class="row" style="height: 50%;">
+                <div style="font-size: 120%; text-align: start;">기업정보</div> 
+                <div class="text-style">기업정보입니다.</div>
+              </div>
+              <div class="row" style="height: 50%;">
+                <div style="font-size: 120%; text-align: start;">사업정보</div> 
+                <div>사업정보입니다.</div>
+              </div>
+            </div>
+            <div class="col-5">
+              <div style="font-size: 120%; text-align: start; margin-bottom: 10px;">관련 뉴스</div> 
+                {% for news in stock_corp[i].news_data %}
+                <div class="text-style"><a href="{{news.originallink}}">{{news.preprocess_title}}</a></div>
+                <!-- <div style="margin:2px 0; word-break: normal; text-align: justify; color: gray;">{{news.preprocess_description}}</div> -->
+                <!-- <div class="text-style-new" style="height: 100px; margin:2px 0; color: gray;">{{news.preprocess_description}}</div> -->
+                <div class="text-style-new">{{news.preprocess_description}}</div>
+                <div class="text-style" style="margin-bottom: 10px;">{{news.pubDate}}</div>
+                {% endfor %}
+              <div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div>
+      추천할 관련주가 없습니다.
+    </div>
+    {%endif%}
+  </div>
+  {%endif%}
+</div>
+{% endblock %}
