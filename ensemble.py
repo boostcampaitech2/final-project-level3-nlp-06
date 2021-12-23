@@ -92,8 +92,8 @@ def ensemble_inference(models, news_text):
     return ensembled_sim_corps_to_score_dict, keywords_set
 
 def ensemble_inference_real_time(models, news_text, topk):
-    ensembled_sim_corps_to_score_dict, _ = ensemble_inference(models, news_text)
-    return list(ensembled_sim_corps_to_score_dict.keys())[-topk::][::-1]
+    ensembled_sim_corps_to_score_dict, keywords_set = ensemble_inference(models, news_text)
+    return list(ensembled_sim_corps_to_score_dict.keys())[-topk::][::-1], keywords_set
 
 def ensemble_inference_from_disk(models, query_dir = 'queries.txt', ):
     infer_dict = {}

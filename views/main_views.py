@@ -80,14 +80,19 @@ def stock():
     if newsTextData == None:
         return render_template('index.html', newsTextData=newsTextData, stock_corp=[], flag=0)
     # flag = kobert_text_classification.predict(newsTextData)
+    flag = 0
     # print('flag', flag)
     # stock_corp = get_corporations(newsTextData)
 
+
     topk = 3
-    # ensemble.Models(num_prediction=20)
-    # ensemble.ensemble_inference_real_time(ensemble_model, newsTextData, topk)
+    ensemble_model = ensemble.Models(num_prediction=20)
+    # news_keywords : 앙상블 결과로 뉴스에서 뽑은 키워드 -> [str]
+    stock_corp, news_keywords = ensemble.ensemble_inference_real_time(ensemble_model, newsTextData, topk)
+    print(news_keywords)
     
-    stock_corp = ['삼성전자', 'LG전자', 'LG이노텍']
+    
+    # stock_corp = ['삼성전자', 'LG전자', 'LG이노텍']
     data = Corporations.query.filter(Corporations.name.in_(stock_corp)).all()
     for i in range(len(data)):
         data[i].detail = json.loads(data[i].details)
