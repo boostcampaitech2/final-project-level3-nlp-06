@@ -13,3 +13,6 @@ data\news\valid
 # log & result folder
 wandb
 results
+
+#flask
+config.py
