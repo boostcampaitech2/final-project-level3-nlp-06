@@ -14,17 +14,28 @@ from .predict import *
 def split_news_for_bert(news_text, length):
     return [news_text[i:i+length].split() for i in range(0, len(news_text), length)]
 
+class CustomArg:
+    def __init__(self):
+        pass
+        self.model_dir = None#model_dir
+        self.data_dir =  None#data_dir
+        self.label_file =  None#label_file
+        self.batch_size =  None#batch_size
+        self.no_cuda =  None#no_cuda
+    def add_argument(self, att_name, att_val = None, default = None, type = type, help = help):
+        setattr(self, att_name, att_val)
+        
 # NER 모델 로드 함수
 def load_NER():
     # ## 2. NER
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--model_dir", default="/opt/ml/final-project-level3-nlp-06/KoBERT/model", type=str, help="Path to save, load model")
-    parser.add_argument("--data_dir", default="/opt/ml/final-project-level3-nlp-06/KoBERT/data", type=str, help="Ner model data files dir")
-    parser.add_argument("--label_file", default="label.txt", type=str, help="Ner model data files dir")
+    parser = CustomArg()
+    parser.add_argument("model_dir", att_val="/opt/ml/final-project-level3-nlp-06/KoBERT/model", type=str, help="Path to save, load model")
+    parser.add_argument("data_dir", att_val="/opt/ml/final-project-level3-nlp-06/KoBERT/data", type=str, help="Ner model data files dir")
+    parser.add_argument("label_file", att_val="label.txt", type=str, help="Ner model data files dir")
 
-    parser.add_argument("--batch_size", default=1, type=int, help="Batch size for prediction")
-    parser.add_argument("--no_cuda", action="store_false", default=False, help="Avoid using CUDA when available")
-    pred_config = parser.parse_args()
+    parser.add_argument("batch_size", att_val=1, type=int, help="Batch size for prediction")
+    parser.add_argument("no_cuda", att_val="store_false", default=False, help="Avoid using CUDA when available")
+    pred_config = parser
 
     # load model and args
     args = get_args(pred_config)
