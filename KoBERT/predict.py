@@ -18,6 +18,7 @@ def get_device(pred_config):
 
 
 def get_args(pred_config):
+    print( "get_args test : ", pred_config.model_dir )
     return torch.load(os.path.join(pred_config.model_dir, 'training_args.bin'))
 
 def get_label_args(pred_config):
