@@ -17,4 +17,5 @@ data\news\valid
 wandb
 results
 
-.gitignore
+config.py
+

@@ -33,3 +33,11 @@ final-project-level3-nlp-06
 │   ├── bm25_test.ipynb  
 ├── retriever_dart - 뉴스데이터를 통한 DART 문서 검색  
 └── text_classification - 뉴스 입력에 대한 주식관련 뉴스인지 분류  
+
+## install ner model
+```
+apt install git-lfs
+git clone https://huggingface.co/nlpHakdang/roberta-large-NER
+cd roberta-large-NER
+git lfs fetch
+```
