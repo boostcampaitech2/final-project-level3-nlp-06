@@ -8,25 +8,20 @@ from seqeval.metrics import precision_score, recall_score, f1_score, classificat
 
 from transformers import (
     BertConfig,
-    RobertaConfig,
     DistilBertConfig,
     ElectraConfig,
     ElectraTokenizer,
-    AutoTokenizer,
     BertTokenizer,
-    RobertaTokenizer,
     BertForTokenClassification,
-    RobertaForTokenClassification,
     DistilBertForTokenClassification,
     ElectraForTokenClassification
 )
-from .tokenization_kobert import KoBertTokenizer
+from tokenization_kobert import KoBertTokenizer
 
 MODEL_CLASSES = {
     'kobert': (BertConfig, BertForTokenClassification, KoBertTokenizer),
     'distilkobert': (DistilBertConfig, DistilBertForTokenClassification, KoBertTokenizer),
     'bert': (BertConfig, BertForTokenClassification, BertTokenizer),
-    'roberta': (RobertaConfig, RobertaForTokenClassification, AutoTokenizer),
     'kobert-lm': (BertConfig, BertForTokenClassification, KoBertTokenizer),
     'koelectra-base': (ElectraConfig, ElectraForTokenClassification, ElectraTokenizer),
     'koelectra-small': (ElectraConfig, ElectraForTokenClassification, ElectraTokenizer),
@@ -35,8 +30,7 @@ MODEL_CLASSES = {
 MODEL_PATH_MAP = {
     'kobert': 'monologg/kobert',
     'distilkobert': 'monologg/distilkobert',
-    'bert': 'klue/bert-base',
-    'roberta': 'klue/roberta-large',
+    'bert': 'bert-base-multilingual-cased',
     'kobert-lm': 'monologg/kobert-lm',
     'koelectra-base': 'monologg/koelectra-base-discriminator',
     'koelectra-small': 'monologg/koelectra-small-discriminator',
@@ -59,7 +53,6 @@ def get_labels(args):
 
 
 def load_tokenizer(args):
-    print(MODEL_CLASSES[args.model_type][2], args.model_name_or_path)
     return MODEL_CLASSES[args.model_type][2].from_pretrained(args.model_name_or_path)
 
 

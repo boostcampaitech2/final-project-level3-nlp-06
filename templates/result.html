@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block main %}
+<h3>Method : {{method}}</h3>
+{% if results|length > 0%}
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">평가자수</th>
+      <th scope="col">평점</th>
+      {% for name in members %}
+      <th scope="col">{{name}}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for result in results %}
+    <tr>
+      <th scope="row">{{result.id}}</th>
+      <td>{{result.count or 0}}</td>
+      <td>{{result.mean or 0}}</td>
+      {% for name in members %}
+      <td>{{result.score[name] or 0}}</td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div>결과가 없습니다.</div>
+{% endif %}
+{% endblock %}

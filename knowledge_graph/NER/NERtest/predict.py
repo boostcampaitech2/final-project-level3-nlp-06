@@ -8,7 +8,7 @@ import torch
 from torch.utils.data import TensorDataset, DataLoader, SequentialSampler
 from transformers import AutoModelForTokenClassification
 
-from .utils import init_logger, load_tokenizer, get_labels
+from utils import init_logger, load_tokenizer, get_labels
 
 logger = logging.getLogger(__name__)
 
@@ -19,10 +19,6 @@ def get_device(pred_config):
 
 def get_args(pred_config):
     return torch.load(os.path.join(pred_config.model_dir, 'training_args.bin'))
-
-def get_label_args(pred_config):
-    print("get label arg function: ", pred_config.data_dir)
-    return pred_config.data_dir
 
 
 def load_model(pred_config, args, device):
@@ -35,8 +31,7 @@ def load_model(pred_config, args, device):
         model.to(device)
         model.eval()
         logger.info("***** Model Loaded *****")
-    except Exception as e:
-        print(e)
+    except:
         raise Exception("Some model files might be missing...")
 
     return model
@@ -131,6 +126,7 @@ def convert_input_file_to_tensor_dataset(lines,
 def predict(pred_config):
     # load model and args
     args = get_args(pred_config)
+    args.data_dir = 'knowledge_graph/NER/NERtest/model/../data'    
     device = get_device(pred_config)
     model = load_model(pred_config, args, device)
     label_lst = get_labels(args)
@@ -195,10 +191,9 @@ if __name__ == "__main__":
     init_logger()
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--input_file", default="sample_pred_in.txt", type=str, help="Input file for prediction")
-    parser.add_argument("--output_file", default="sample_pred_out.txt", type=str, help="Output file for prediction")
-    parser.add_argument("--model_dir", default="./KoBERT/model", type=str, help="Path to save, load model")
-
+    parser.add_argument("--input_file", default="knowledge_graph/NER/NERtest/sample_pred_in.txt", type=str, help="Input file for prediction")
+    parser.add_argument("--output_file", default="knowledge_graph/NER/NERtest/sample_pred_out.txt", type=str, help="Output file for prediction")
+    parser.add_argument("--model_dir", default="knowledge_graph/NER/NERtest/model", type=str, help="Path to save, load model")
     parser.add_argument("--batch_size", default=32, type=int, help="Batch size for prediction")
     parser.add_argument("--no_cuda", action="store_true", help="Avoid using CUDA when available")
 

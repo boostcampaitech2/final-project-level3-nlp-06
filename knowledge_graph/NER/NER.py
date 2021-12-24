@@ -1,61 +1,14 @@
+from transformers import BertModel, AutoModelForTokenClassification
+from tokenization_kobert import KoBertTokenizer
 import os
-import logging
-import argparse
-from tqdm import tqdm, trange
-
-import numpy as np
-import torch
 from torch.utils.data import TensorDataset, DataLoader, SequentialSampler
-from transformers import AutoModelForTokenClassification
+import numpy as np
+import tqdm
+import torch
 
-from .utils import init_logger, load_tokenizer, get_labels
-
-logger = logging.getLogger(__name__)
-
-
-def get_device(pred_config):
-    return "cuda" if torch.cuda.is_available() and not pred_config.no_cuda else "cpu"
-
-
-def get_args(pred_config):
-    return torch.load(os.path.join(pred_config.model_dir, 'training_args.bin'))
-
-def get_label_args(pred_config):
-    print("get label arg function: ", pred_config.data_dir)
-    return pred_config.data_dir
-
-
-def load_model(pred_config, args, device):
-    # Check whether model exists
-    if not os.path.exists(pred_config.model_dir):
-        raise Exception("Model doesn't exists! Train first!")
-
-    try:
-        model = AutoModelForTokenClassification.from_pretrained(pred_config.model_dir)  # Config will be automatically loaded from model_dir
-        model.to(device)
-        model.eval()
-        logger.info("***** Model Loaded *****")
-    except Exception as e:
-        print(e)
-        raise Exception("Some model files might be missing...")
-
-    return model
-
-
-def read_input_file(pred_config):
-    lines = []
-    with open(pred_config.input_file, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            words = line.split()
-            lines.append(words)
-
-    return lines
-
-
-def convert_input_file_to_tensor_dataset(lines,
-                                         pred_config,
-                                         args,
+model = AutoModelForTokenClassification.from_pretrained('monologg/kobert')
+tokenizer = KoBertTokenizer.from_pretrained('monologg/kobert')
+def convert_input_file_to_tensor_dataset(lines,                                         
                                          tokenizer,
                                          pad_token_label_id,
                                          cls_token_segment_id=0,
@@ -72,6 +25,7 @@ def convert_input_file_to_tensor_dataset(lines,
     all_attention_mask = []
     all_token_type_ids = []
     all_slot_label_mask = []
+    max_seq_len = 100
 
     for words in lines:
         tokens = []
@@ -86,9 +40,9 @@ def convert_input_file_to_tensor_dataset(lines,
 
         # Account for [CLS] and [SEP]
         special_tokens_count = 2
-        if len(tokens) > args.max_seq_len - special_tokens_count:
-            tokens = tokens[: (args.max_seq_len - special_tokens_count)]
-            slot_label_mask = slot_label_mask[:(args.max_seq_len - special_tokens_count)]
+        if len(tokens) > max_seq_len - special_tokens_count:
+            tokens = tokens[: (max_seq_len - special_tokens_count)]
+            slot_label_mask = slot_label_mask[:(max_seq_len - special_tokens_count)]
 
         # Add [SEP] token
         tokens += [sep_token]
@@ -106,7 +60,7 @@ def convert_input_file_to_tensor_dataset(lines,
         attention_mask = [1 if mask_padding_with_zero else 0] * len(input_ids)
 
         # Zero-pad up to the sequence length.
-        padding_length = args.max_seq_len - len(input_ids)
+        padding_length = max_seq_len - len(input_ids)
         input_ids = input_ids + ([pad_token_id] * padding_length)
         attention_mask = attention_mask + ([0 if mask_padding_with_zero else 1] * padding_length)
         token_type_ids = token_type_ids + ([pad_token_segment_id] * padding_length)
@@ -127,36 +81,50 @@ def convert_input_file_to_tensor_dataset(lines,
 
     return dataset
 
+def get_labels(label_file):
+    return [label.strip() for label in open(os.path.join(label_file), 'r', encoding='utf-8')]
+def read_input_file(input_file):
+    lines = []
+    try : 
+        with open(input_file, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                words = line.split()
+                lines.append(words)
+    except:
+        temp = "부문  주요제품  CE 부문  TV, 모니터, 냉장고, 세탁기, 에어컨 등  IM 부문  HHP, 네트워크시스템, 컴퓨터 등  DS 부문  DRAM, NAND Flash, 모바일AP, 스마트폰용 OLED 패널 등   Harman 부문  디지털 콕핏(Digital Cockpit), 텔레매틱스(Telematics), 스피커 등"
+        line = temp.strip()
+        words = temp.split()
+        lines.append(words)
+    return lines
 
-def predict(pred_config):
-    # load model and args
-    args = get_args(pred_config)
-    device = get_device(pred_config)
-    model = load_model(pred_config, args, device)
-    label_lst = get_labels(args)
-    logger.info(args)
 
+
+def predict():
+    # load model and args    
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model = AutoModelForTokenClassification.from_pretrained('monologg/kobert')  # Config will be automatically loaded from model_dir
+    model.to(device)
+    model.eval()    
+    label_lst = get_labels("knowledge_graph/NER/label.txt")   
     # Convert input file to TensorDataset
-    pad_token_label_id = torch.nn.CrossEntropyLoss().ignore_index
-    tokenizer = load_tokenizer(args)
-    lines = read_input_file(pred_config)
-    dataset = convert_input_file_to_tensor_dataset(lines, pred_config, args, tokenizer, pad_token_label_id)
+    pad_token_label_id = torch.nn.CrossEntropyLoss().ignore_index    
+    lines = read_input_file("knowledge_graph/NER/pred_test.txt")
+    dataset = convert_input_file_to_tensor_dataset(lines, tokenizer, pad_token_label_id)
 
     # Predict
     sampler = SequentialSampler(dataset)
-    data_loader = DataLoader(dataset, sampler=sampler, batch_size=pred_config.batch_size)
+    data_loader = DataLoader(dataset, sampler=sampler, batch_size=32)
 
     all_slot_label_mask = None
     preds = None
 
-    for batch in tqdm(data_loader, desc="Predicting"):
+    for batch in data_loader:
         batch = tuple(t.to(device) for t in batch)
         with torch.no_grad():
             inputs = {"input_ids": batch[0],
                       "attention_mask": batch[1],
                       "labels": None}
-            if args.model_type != "distilkobert":
-                inputs["token_type_ids"] = batch[2]
             outputs = model(**inputs)
             logits = outputs[0]
 
@@ -177,7 +145,7 @@ def predict(pred_config):
                 preds_list[i].append(slot_label_map[preds[i][j]])
 
     # Write to output file
-    with open(pred_config.output_file, "w", encoding="utf-8") as f:
+    with open("ner_result.txt", "w", encoding="utf-8") as f:
         for words, preds in zip(lines, preds_list):
             line = ""
             for word, pred in zip(words, preds):
@@ -187,20 +155,6 @@ def predict(pred_config):
                     line = line + "[{}:{}] ".format(word, pred)
 
             f.write("{}\n".format(line.strip()))
+    
 
-    logger.info("Prediction Done!")
-
-
-if __name__ == "__main__":
-    init_logger()
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument("--input_file", default="sample_pred_in.txt", type=str, help="Input file for prediction")
-    parser.add_argument("--output_file", default="sample_pred_out.txt", type=str, help="Output file for prediction")
-    parser.add_argument("--model_dir", default="./KoBERT/model", type=str, help="Path to save, load model")
-
-    parser.add_argument("--batch_size", default=32, type=int, help="Batch size for prediction")
-    parser.add_argument("--no_cuda", action="store_true", help="Avoid using CUDA when available")
-
-    pred_config = parser.parse_args()
-    predict(pred_config)
+predict()

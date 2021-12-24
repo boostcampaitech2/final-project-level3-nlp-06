@@ -1,0 +1,19 @@
+import os
+
+BASE_DIR = os.path.dirname(__file__)
+
+# SQLALCHEMY_DATABASE_URI = 'sqlite:///{}'.format(os.path.join(BASE_DIR, 'database.db'))
+SQLALCHEMY_TRACK_MODIFICATIONS = False
+SECRET_KEY = 
+
+NAVER_CLIENT_ID = 
+NAVER_CLIENT_SECRET = 
+
+MYSQL_USER = 
+MYSQL_PASSWORD =
+MYSQL_DB = 
+MYSQL_HOST = 
+MYSQL_PORT =
+MYSQL_CHARSET = 
+
+SQLALCHEMY_DATABASE_URI = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}?charset=utf8"
