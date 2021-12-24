@@ -3,6 +3,9 @@
 *.json
 *.csv
 *.tsv
+*.txt
+*.md
+*.pyc
 
 # data folders 
 data\dart
@@ -13,3 +16,5 @@ data\news\valid
 # log & result folder
 wandb
 results
+
+.gitignore
