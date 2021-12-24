@@ -170,6 +170,7 @@ def print_corp_name(news_text, dart_dict, bm25, pre_dart, pre_name, mecab_tokeni
     
     inside_corp = list(set(inside_corp))   
     doc_scores = bm25.get_scores(tokenized_query)
+    print(doc_scores)
     
     if max(doc_scores) <3: #마땅한 회사가 없음
         return None, None, []
