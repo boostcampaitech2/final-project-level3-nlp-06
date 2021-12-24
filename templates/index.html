@@ -23,10 +23,6 @@
 {% endblock %}
 
 {% block main %}
-<!-- <div style="position: absolute; right: 0; top: 5px;">
-  <button type="button" class="btn btn-sm btn-dark" onclick="location.href='evaluation'">Evaluation</button>
-  <button type="button" class="btn btn-sm btn-dark" onclick="location.href='result/bm25'">result</button>
-</div> -->
 <div>
   <form method="GET" action="/stock">
     <div class="container row" style="float: none; margin:auto; margin-top: 100px;">
@@ -34,54 +30,68 @@
         <img style="width: 70%;"
           src="{{ url_for('static', filename='img/main_logo_black.PNG') }}"
           alt="">
-        <!-- <img style="width: 10%;"
-          src="{{ url_for('static', filename='img/sub_logo.png') }}"
-          alt=""> -->
       </a>
     </div>
     <textarea class="form-control" style="height: 150px; margin-top: 50px;" placeholder="뉴스 텍스트 입력해주세요"
       id="newsTextData" name="newsTextData">{% if newsTextData|length > 0 %}{{newsTextData}}{% endif %}</textarea>
     <div class="d-grid d-md-flex justify-content-md-end" style="margin-top:10px;">
-      <button class="w-30 btn btn-lg btn-dark" type="submit">관련주 추천받기</button>
+      <button class="w-30 btn btn-lg btn-dark" type="submit">관련 주식 추천받기</button>
     </div>
   </form>
-  {% if newsTextData|length == 0 %}
+  {% if flag == 2 %}
+  <div>
+    텍스트 길이가 너무 짧습니다.
+  </div>
+  {% elif newsTextData|length == 0 %}
   <div>
     입력된 뉴스 텍스트가 없습니다.
   </div>
   {% else %}
   <div style="margin-top:20px;">
-    <!-- <div style="margin: 10px;"> -->
-    <h2 style="text-align: center;">관련주 추천</h2>
+    <h2 style="text-align: center;">키워드 관련 기업</h2>
+    {% if keyword_graphs|length > 0 %}
+    <div>
+      {% for i in range(keyword_graphs|length) %}
+      <button type="button" class="btn btn-dark btn-sm" style="margin-bottom: 10px;" onClick="onDisplayGraphs({{i+1}})">{{keyword_graphs[i]['keyword']}}</button>
+      {% endfor %}
+      {% for i in range(keyword_graphs|length) %}
+      <div id="keyword_graph{{i+1}}" class="card" style="width: 100%; margin-bottom: 10px;">
+        <div class="card-body">
+          <img style="width:60%;" src="{{ url_for('static', filename=keyword_graphs[i]['img_url']) }}" alt="">
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div>
+      키워드가 없습니다.
+    </div>
+    {% endif %}
+    <h2 style="text-align: center;">관련 주식</h2>
     {% if flag == 0 %}<div style="color: red; margin: 20px;">※ 해당 뉴스에 대한 관련주는 뉴스와 관련이 없을 수 있습니다.</div>{% endif %}
-    <!-- </div> -->
     {% if stock_corp|length > 0 %}
     <div>
-      
       {% for i in range(3) %}
-      <!-- <span class="badge bg-primary">{{corp}}</span> -->
-      <button type="button" class="btn btn-dark btn-sm" style="margin-bottom: 10px;" onClick="onDisplay({{i+1}})">{{stock_corp[i].name}}</button>
+      <button type="button" class="btn btn-dark btn-sm" style="margin-bottom: 10px;" onClick="onDisplayCorporations({{i+1}})">{{stock_corp[i].name}}</button>
       {% endfor %}
       {% for i in range(3) %}
-      <div id="corp_info{{i+1}}" class="card" style="width: 100%;">
+      <div id="corp_info{{i+1}}" class="card" style="width: 100%; margin-bottom: 10px;">
         <div class="card-body">
           <div class="row">
             <div class="col-7">
               <div class="row" style="height: 50%;">
                 <div style="font-size: 120%; text-align: start;">기업정보</div> 
-                <div class="text-style">기업정보입니다.</div>
+                <div class="text-style"><img style="width:100%" src="{{stock_corp[i].img_url}}" alt=""></div>
               </div>
               <div class="row" style="height: 50%;">
                 <div style="font-size: 120%; text-align: start;">사업정보</div> 
-                <div>사업정보입니다.</div>
+                <div style="height: 70%; text-align: justify; overflow-y: auto; text-overflow: ellipsis;">{{stock_corp[i].summary['사업 정보']}}</div>
               </div>
             </div>
             <div class="col-5">
               <div style="font-size: 120%; text-align: start; margin-bottom: 10px;">관련 뉴스</div> 
                 {% for news in stock_corp[i].news_data %}
                 <div class="text-style"><a href="{{news.originallink}}">{{news.preprocess_title}}</a></div>
-                <!-- <div style="margin:2px 0; word-break: normal; text-align: justify; color: gray;">{{news.preprocess_description}}</div> -->
-                <!-- <div class="text-style-new" style="height: 100px; margin:2px 0; color: gray;">{{news.preprocess_description}}</div> -->
                 <div class="text-style-new">{{news.preprocess_description}}</div>
                 <div class="text-style" style="margin-bottom: 10px;">{{news.pubDate}}</div>
                 {% endfor %}
@@ -97,6 +107,48 @@
       추천할 관련주가 없습니다.
     </div>
     {%endif%}
+    <h2 style="text-align: center;">뉴스에 언급된 기업</h2>
+    {% if inside_corp|length > 0 %}
+    <div>
+      {% for j in range(inside_corp|length) %}
+      <button type="button" class="btn btn-dark btn-sm" style="margin-bottom: 10px;" onClick="onDisplayInsideCorporations({{j+1}})">{{inside_corp[j].name}}</button>
+      {% endfor %}
+      {% for j in range(inside_corp|length) %}
+      <div id="inside_corp_info{{j+1}}" class="card" style="width: 100%; margin-bottom: 10px;">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-7">
+              <div class="row" style="height: 50%;">
+                <div style="font-size: 120%; text-align: start;">기업정보</div> 
+                <div class="text-style"><img style="width:100%" src="{{inside_corp[j].img_url}}" alt=""></div>
+              </div>
+              <div class="row" style="height: 50%;">
+                <div>
+                  <div style="font-size: 120%; text-align: start;">사업정보</div> 
+                  <br>
+                  <div style="height: 70%; text-align: justify; overflow-y: auto; text-overflow: ellipsis;">{{inside_corp[j].summary['사업 정보']}}</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-5">
+              <div style="font-size: 120%; text-align: start; margin-bottom: 10px;">관련 뉴스</div> 
+                {% for news in inside_corp[j].news_data %}
+                <div class="text-style"><a href="{{news.originallink}}">{{news.preprocess_title}}</a></div>
+                <div class="text-style-new">{{news.preprocess_description}}</div>
+                <div class="text-style" style="margin-bottom: 10px;">{{news.pubDate}}</div>
+                {% endfor %}
+              <div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div>
+      뉴스에 언급된 기업이 없습니다.
+    </div>
+    {% endif %}
   </div>
   {%endif%}
 </div>

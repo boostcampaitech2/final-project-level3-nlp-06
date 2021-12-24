@@ -37,9 +37,8 @@ def tokenize(text):
 
 
 def doc2vec_inference(doc, num_prediction = 3):
-
-    if os.path.isfile("/opt/ml/final-project-level3-nlp-06/model/dart_fin.doc2vec") :
-        model = doc2vec.Doc2Vec.load('/opt/ml/final-project-level3-nlp-06/model/dart_fin.doc2vec') # 경로를 바꿔주세요
+    if os.path.join(os.getcwd(), 'KoBERT/model/dart_fin.doc2vec') :
+        model = doc2vec.Doc2Vec.load(os.path.join(os.getcwd(), 'KoBERT/model/dart_fin.doc2vec')) # 경로를 바꿔주세요
     else:
         model = load_doc_model()
 

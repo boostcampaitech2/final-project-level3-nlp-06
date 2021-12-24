@@ -55,45 +55,27 @@ class BERTClassifier(nn.Module):
             out = self.dropout(pooler)
         return self.classifier(out)
 
-def get_vocab():
-    bertmodel, vocab = get_pytorch_kobert_model()
-    return bertmodel, vocab
+class BERTModels():
+    def __init__(self):
+        self.bertmodel, self.vocab = get_pytorch_kobert_model()
+        # self.dr_rate = dr_rate
+        self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        # self.model = BERTClassifier(self.bertmodel, dr_rate=self.dr_rate).to(self.device)
+        self.model = torch.load('./model.pt')
+        self.tokenizer = nlp.data.BERTSPTokenizer(get_tokenizer(), self.vocab)
 
+    def predict(self, news):
+        max_len = 64
+        news_list = [[news, '0']]
 
-def get_my_tokenizer():
-    _, vocab = get_vocab()
+        bert_dataset = BERTDataset(news_list, 0, 1, self.tokenizer, max_len, True, False)
+        dataloader = torch.utils.data.DataLoader(bert_dataset, batch_size=1, num_workers=4)
 
-    tokenizer = get_tokenizer()
-    tok = nlp.data.BERTSPTokenizer(tokenizer, vocab)
-    return tok
-
-def predict(news):
-    max_len = 64
-
-    device = "cuda:0" if torch.cuda.is_available() else "cpu"
-
-    news_list = [[news, '0']]
-
-    bertmodel, _ = get_vocab()
-
-
-    # model = BERTClassifier(*args, **kwargs)
-    # model.load_state_dict(torch.load(PATH))
-    model = BERTClassifier(bertmodel, dr_rate=0.5).to(device)
-    # model.load_state_dict(torch.load('./model.pt'))
-    model = torch.load('./model.pt')
-
-    tok = get_my_tokenizer()
-
-    bert_dataset = BERTDataset(news_list, 0, 1, tok, max_len, True, False)
-    dataloader = torch.utils.data.DataLoader(bert_dataset, batch_size=1, num_workers=4)
-
-
-    for batch_id, (token_ids, valid_length, segment_ids, label) in enumerate(dataloader): 
-        token_ids = token_ids.long().to(device) 
-        segment_ids = segment_ids.long().to(device) 
-        valid_length = valid_length 
-        out = model(token_ids, valid_length, segment_ids)
-        prediction = out.cpu().detach().numpy().argmax()
-        break
-    return prediction
+        for batch_id, (token_ids, valid_length, segment_ids, label) in enumerate(dataloader): 
+            token_ids = token_ids.long().to(self.device) 
+            segment_ids = segment_ids.long().to(self.device) 
+            valid_length = valid_length 
+            out = self.model(token_ids, valid_length, segment_ids)
+            prediction = out.cpu().detach().numpy().argmax()
+            break
+        return prediction

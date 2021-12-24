@@ -1,14 +1,12 @@
 {% extends 'base.html' %}
 
 {% block main %}
-
 <h3>Method : {{method}}</h3>
 {% if results|length > 0%}
 <table class="table table-striped">
   <thead>
     <tr>
       <th scope="col">#</th>
-      <th scope="col">뉴스번호</th>
       <th scope="col">평가자수</th>
       <th scope="col">평점</th>
       {% for name in members %}
@@ -20,7 +18,6 @@
     {% for result in results %}
     <tr>
       <th scope="row">{{result.id}}</th>
-      <td>{{result.news_data['id']}}</td>
       <td>{{result.count or 0}}</td>
       <td>{{result.mean or 0}}</td>
       {% for name in members %}
@@ -33,6 +30,4 @@
 {% else %}
 <div>결과가 없습니다.</div>
 {% endif %}
-<!-- <button class="btn btn-sm btn-dark" onclick="location.href='/'">홈으로</button> -->
-<!-- <button type="button" class="btn btn-sm btn-dark" onclick="location.href='evaluation'">Evaluation</button> -->
 {% endblock %}

@@ -29,8 +29,10 @@ class CustomArg:
 def load_NER():
     # ## 2. NER
     parser = CustomArg()
-    parser.add_argument("model_dir", att_val="/opt/ml/final-project-level3-nlp-06/KoBERT/model", type=str, help="Path to save, load model")
-    parser.add_argument("data_dir", att_val="/opt/ml/final-project-level3-nlp-06/KoBERT/data", type=str, help="Ner model data files dir")
+    # parser.add_argument("model_dir", att_val="/opt/ml/final-project-level3-nlp-06/KoBERT/model", type=str, help="Path to save, load model")
+    parser.add_argument("model_dir", att_val="/opt/ml/coding/KoBERT/model", type=str, help="Path to save, load model")
+    # parser.add_argument("data_dir", att_val="/opt/ml/final-project-level3-nlp-06/KoBERT/data", type=str, help="Ner model data files dir")
+    parser.add_argument("data_dir", att_val="/opt/ml/coding/KoBERT/data", type=str, help="Ner model data files dir")
     parser.add_argument("label_file", att_val="label.txt", type=str, help="Ner model data files dir")
 
     parser.add_argument("batch_size", att_val=1, type=int, help="Batch size for prediction")
@@ -149,8 +151,11 @@ def print_corp_name(news_text, dart_dict, bm25, pre_dart, pre_name, mecab_tokeni
             '전년','동월','물가','하락','소비자','상승','운영','증가','억원','억만원','할인','사용','것으']
 
     if ner==None:
-        keywords = summarize_with_keywords([target], min_count=4, max_length=7, beta=0.85, max_iter=10,stopwords=stopwords,verbose=True)
-        tokenized_query = list(keywords.keys())
+        try:
+            keywords = summarize_with_keywords([target], min_count=4, max_length=7, beta=0.85, max_iter=10,stopwords=stopwords,verbose=True)
+            tokenized_query = list(keywords.keys())
+        except:
+            tokenized_query = list()
     else:
         tokenized_query = mecab_tokenizer.nouns(ner)
 
@@ -163,17 +168,15 @@ def print_corp_name(news_text, dart_dict, bm25, pre_dart, pre_name, mecab_tokeni
         if key in dart_dict['corp_name']:
             inside_corp.append(key)
     
-    inside_corp = list(set(inside_corp))
-    
+    inside_corp = list(set(inside_corp))   
     doc_scores = bm25.get_scores(tokenized_query)
     
     if max(doc_scores) <3: #마땅한 회사가 없음
-        return None, None
+        return None, None, []
     else:
         list_dart_n = bm25.get_top_n(tokenized_query, list(pre_dart.values()), n=num_prediction)
         corps = [pre_name[dart] for dart in list_dart_n]
-
-    return corps,tokenized_query#, inside_corp, " ".join(target) , corps
+    return corps,tokenized_query, inside_corp
 
 
 def get_preprocessed_dart_data():
@@ -241,8 +244,8 @@ class Bm25_module():
     
     def inference_with_word_rank(self, news_text):
         preprocessed_news_text = self.check_update_preprocess(news_text)
-        kr_result, kr_keywords = self.search_sim_corp_with_bm25(preprocessed_news_text)
-        return kr_result, kr_keywords
+        kr_result, kr_keywords, inside_corp = self.search_sim_corp_with_bm25(preprocessed_news_text)
+        return kr_result, kr_keywords, inside_corp
 
     def ner_extract_keywords(self, split_news_text):
         
@@ -252,8 +255,8 @@ class Bm25_module():
                                             )
 
     def search_sim_corp_with_bm25(self, preprocessed_news_text, ner_keywords = None):
-        related_corps, preprocessed_ner_keywords = print_corp_name(preprocessed_news_text, self.dart_dict, self.bm25, self.corp_to_text_dict, self.text_to_corp_dict, self.mecab_tokenizer, ner=ner_keywords, num_prediction = self.NUM_PREDICTION)
-        return related_corps, preprocessed_ner_keywords
+        related_corps, preprocessed_ner_keywords, inside_corp = print_corp_name(preprocessed_news_text, self.dart_dict, self.bm25, self.corp_to_text_dict, self.text_to_corp_dict, self.mecab_tokenizer, ner=ner_keywords, num_prediction = self.NUM_PREDICTION)
+        return related_corps, preprocessed_ner_keywords, inside_corp
 
     def inference_with_ner(self, news_text):
         
@@ -261,8 +264,8 @@ class Bm25_module():
 
         split_news_text = split_news_for_bert(preprocessed_news_text, length=500)
         ner_keywords = self.ner_extract_keywords(split_news_text)
-        related_corps, preprocessed_ner_keywords = self.search_sim_corp_with_bm25(preprocessed_news_text, ner_keywords = ner_keywords)
-        return related_corps, preprocessed_ner_keywords
+        related_corps, preprocessed_ner_keywords, inside_corp = self.search_sim_corp_with_bm25(preprocessed_news_text, ner_keywords = ner_keywords)
+        return related_corps, preprocessed_ner_keywords, inside_corp
 
 
 if __name__=="__main__":

@@ -30,20 +30,20 @@
   {% for corporation_id in range(data.corporations_data|length) %}
   <div>
     <div>
-      <h3>추천주 : {{data.corporations_data[corporation_id]['corp_name']}}</h3>
+      <h3>추천주 : {{data.corporations_data[corporation_id]['기업 이름']}}</h3>
     </div>
     <div class="accordion accordion-flush" id="accordionFlushCorporation">
       <div class="accordion-item">
         <h2 class="accordion-header" id="flush-heading{{corporation_id}}One">
           <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
             data-bs-target="#flush-collapse{{corporation_id}}One" aria-expanded="false" aria-controls="flush-collapse{{corporation_id}}One">
-            회사의 개요
+            사업 요약 정보
           </button>
         </h2>
         <div id="flush-collapse{{corporation_id}}One" class="accordion-collapse collapse" aria-labelledby="flush-heading{{corporation_id}}One"
           data-bs-parent="#accordionFlushCorporation">
           <div class="accordion-body" style="word-break: normal; text-align: justify;">
-            {{data.corporations_data[corporation_id]['회사의 개요']}}
+            {{data.corporations_data[corporation_id]['extractive3']}}
           </div>
         </div>
       </div>
@@ -57,35 +57,9 @@
         <div id="flush-collapse{{corporation_id}}Two" class="accordion-collapse collapse" aria-labelledby="flush-heading{{corporation_id}}Two"
           data-bs-parent="#accordionFlushCorporation">
           <div class="accordion-body" style="word-break: normal; text-align: justify;">
-            {{data.corporations_data[corporation_id]['사업의 개요']}}
-          </div>
-        </div>
-      </div>
-      <div class="accordion-item">
-        <h2 class="accordion-header" id="flush-heading{{corporation_id}}Three">
-          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-            data-bs-target="#flush-collapse{{corporation_id}}Three" aria-expanded="false" aria-controls="flush-collapse{{corporation_id}}Three">
-            주요 제품 및 서비스
-          </button>
-        </h2>
-        <div id="flush-collapse{{corporation_id}}Three" class="accordion-collapse collapse" aria-labelledby="flush-heading{{corporation_id}}Three"
-          data-bs-parent="#accordionFlushCorporation">
-          <div class="accordion-body" style="word-break: normal; text-align: justify;">
-            {{data.corporations_data[corporation_id]['주요 제품 및 서비스']}}
-          </div>
-        </div>
-      </div>
-      <div class="accordion-item">
-        <h2 class="accordion-header" id="flush-heading{{corporation_id}}Four">
-          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-            data-bs-target="#flush-collapse{{corporation_id}}Four" aria-expanded="false" aria-controls="flush-collapse{{corporation_id}}Four">
-            주요계약 및 연구개발활동
-          </button>
-        </h2>
-        <div id="flush-collapse{{corporation_id}}Four" class="accordion-collapse collapse" aria-labelledby="flush-heading{{corporation_id}}Four"
-          data-bs-parent="#accordionFlushCorporation">
-          <div class="accordion-body" style="word-break: normal; text-align: justify;">
-            {{data.corporations_data[corporation_id]['주요계약 및 연구개발활동']}}
+            {% for text in data.corporations_data[corporation_id]['사업의 개요'] %}
+              {{text}}<br>
+            {% endfor %}
           </div>
         </div>
       </div>
@@ -93,11 +67,11 @@
   </div>
   <br>
   {%endfor%}
-  <form style="margin-top: 100px;" method="GET" action="{% if idx == 20 %}/evaluation {% else %} /evaluation/{{idx+1}}{% endif %}">
+  <form style="margin-top: 100px;" method="GET" action="{% if idx == 93 %}/evaluation {% else %} /evaluation/{{idx+1}}{% endif %}">
     {% for i in range(1, 8) %}
     <div class="form-check form-check-inline">
       <input class="form-check-input" type="radio" name="evaluationRadioOptions" id="eval{{i}}" value="{{i}}">
-      <label class="form-check-label" for="inlineRadio1">{{i}}</label>
+      <label class="form-check-label" for="inlineRadio{{i}}">{{i}}</label>
     </div>
     {% endfor %}
     <div style="margin: 20px 0;">
@@ -107,12 +81,11 @@
   </form>
   <div class="progress">
     <div class="progress-bar" role="progressbar" style="width: {{percent}}%" aria-valuenow="{{percent}}"
-      aria-valuemin="0" aria-valuemax="20">{{idx-1}}/20</div>
+      aria-valuemin="0" aria-valuemax="92">{{idx-1}}/92</div>
   </div>
 </div>
 {% else %}
 <div>{% if idx == 0 %}평가할 데이터가 없습니다.{% else %}평가가 완료되었습니다.{% endif %}</div>
 <button class="btn btn-sm btn-dark" onclick="location.href='/'">홈으로</button>
-<!-- <button type="button" class="btn btn-sm btn-dark" onclick="location.href='result/bm25'">Result</button> -->
 {% endif %}
 {% endblock %}

@@ -4,7 +4,7 @@ from app import db
 class Validations(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, unique=True)
-    news = db.Column(db.Text)
+    news = db.Column(db.TEXT)
     keywords = db.Column(db.TEXT)
     corporations = db.Column(db.TEXT)
     memo = db.Column(db.TEXT)

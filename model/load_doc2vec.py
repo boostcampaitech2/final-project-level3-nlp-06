@@ -28,9 +28,9 @@ def load_doc_model():
 
     # 모델 저장
     print("saving model...")
-    model.save('./dart_fin.doc2vec')
+    model.save('/opt/ml/teamproject/KoBERT/model/dart_fin.doc2vec')
 
-    return doc2vec.Doc2Vec.load('dart_fin.doc2vec')
+    return doc2vec.Doc2Vec.load('/opt/ml/teamproject/KoBERT/model/dart_fin.doc2vec')
 
 if __name__ == '__main__':
     load_doc_model()

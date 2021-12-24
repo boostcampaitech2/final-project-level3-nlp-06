@@ -83,17 +83,19 @@ def run_ensemble(wordrank_sim_corps, ner_sim_corps, doc2vec_sim_corps, ner_keywo
 
 
 def ensemble_inference(models, news_text):
-    n_c, n_k = models.bm25_inference_with_ner(news_text)
-    k_c, k_k = models.bm25_inference_with_word_rank(news_text)
+    n_c, n_k, inside_corp_ner = models.bm25_inference_with_ner(news_text)
+    k_c, k_k, inside_corp_word_rank = models.bm25_inference_with_word_rank(news_text)
     d_c = models.doc2vec_inference(news_text)
+
+    inside_corp = list(set(inside_corp_ner+inside_corp_word_rank))
 
     ensembled_sim_corps_to_score_dict, keywords_set = run_ensemble(k_c, n_c, d_c, n_k, k_k)
 
-    return ensembled_sim_corps_to_score_dict, keywords_set
+    return ensembled_sim_corps_to_score_dict, keywords_set, inside_corp
 
 def ensemble_inference_real_time(models, news_text, topk):
-    ensembled_sim_corps_to_score_dict, keywords_set = ensemble_inference(models, news_text)
-    return list(ensembled_sim_corps_to_score_dict.keys())[-topk::][::-1], keywords_set
+    ensembled_sim_corps_to_score_dict, keywords_set, inside_corp = ensemble_inference(models, news_text)
+    return list(ensembled_sim_corps_to_score_dict.keys())[-topk::][::-1], keywords_set, inside_corp
 
 def ensemble_inference_from_disk(models, query_dir = 'queries.txt', ):
     infer_dict = {}
