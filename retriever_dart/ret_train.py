@@ -262,10 +262,6 @@ def train(epochs, pool = "sum"):
             dart_encoder.zero_grad()
             dart_emb = dart_encoder(**dart_data) # (B, hidden_dim)
 
-
-
-
-
             # pooling
             news_emb_comb = []
             dart_emb_comb = []
