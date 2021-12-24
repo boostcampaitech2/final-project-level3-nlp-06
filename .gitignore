@@ -3,6 +3,9 @@
 *.json
 *.csv
 *.tsv
+*.txt
+*.md
+*.pyc
 
 # data folders 
 data\dart
@@ -14,5 +17,5 @@ data\news\valid
 wandb
 results
 
-#flask
 config.py
+
